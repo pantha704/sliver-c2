@@ -1,0 +1,9 @@
+*.bin
+*.exe
+.env
+.env.*
+*token*
+*secret*
+node_modules/
+.cache/
+!target/*.exe
