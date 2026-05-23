@@ -1,26 +1,16 @@
-# UnDefend - Windows Defender DOS Tool
-Author: Nightmare-Eclipse (@Nightmare-Eclipse, 4.7k followers, "Microsoft's nightmare")
-Stars: 541 | Language: C++
+# UnDefend
+Repository hosting windows defender DOS tool
 
-## Description
-Blocks Windows Defender from receiving signature updates. No admin privileges required.
+This tool does not need administrative privileges and can works as a standard user.
 
-## How it works
-1. Finds Defender's signature update directory via registry
-2. Monitors for new files (ReadDirectoryChangesW)
-3. When a new signature arrives, locks it with exclusive file lock (LockFileEx)
-4. Also locks backup files (mpavbase.lkg, mpavbase.vdm)
-5. WDKillerThread: if Defender service restarts, re-locks all files
+It runs in two modes, passive and aggressive,
 
-## Modes
-- **Passive (default)**: Blocks ALL signature updates. Defender can't detect NEW threats.
-- **Aggressive**: Waits for major platform update (MsMpEng.exe update), then disables Defender completely.
+In Passive mode, the PoC blocks all signature updates, causing defender to be unable to detect any new threats so if anything new is pushed by Microsoft, it is immediately blocked.
 
-## Compile
-```bash
-zig c++ -target x86_64-windows-gnu -mconsole -o UnDefend.exe UnDefend.cpp \
-  -lntdll -lkernel32 -lole32 -ladvapi32 -luser32
-```
+![BottomText](UpdateError.png)
 
-## Note
-Author claims they also found a way to fake the EDR web console (show Defender as running/updating when it's not) but never published it.
+In Aggressive mode, the PoC aims to completely disable but it only works if Microsoft pushes a major platform update (update of MsMpEng.exe and other binaries), this update isn't pushed occasionally like signature updates so the PoC runs in passive mode by default. However, if you expect a major platform update, set the PoC to run in aggressive mode and it will cause windows defender to stop responding. It will be completely disabled and you can run whatever you want without having defender interfer in your business.
+
+![BottomText](EngineUnavailable.png)
+
+Now funnily enough, I found a way to lie to the EDR web console to show that defender is up and running with the latest update even if it's not. I was thinking about publishing the code but after thinking about it, it will cause waaay too much damage so I think I'll keep that stuff stashed for now. 
