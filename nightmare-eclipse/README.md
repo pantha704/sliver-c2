@@ -1,5 +1,7 @@
 # Nightmare-Eclipse Arsenal
 
+> ⚠️ **EDUCATIONAL PURPOSE ONLY.** These repositories are preserved for cybersecurity research and defensive analysis. The exploits documented here target real Windows vulnerabilities. Use only on systems you own or have explicit authorization to test. Unauthorized exploitation is illegal.
+
 **GitHub account:** @Nightmare-Eclipse (4.7k followers, "Microsoft's nightmare", Redmond WA)
 **Status:** Account taken down from GitHub (likely DMCA by Microsoft ~2024-2025). WarCDev mirror org also taken down. Forks exist transiently but get removed quickly.
 
