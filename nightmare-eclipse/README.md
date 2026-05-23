@@ -1,7 +1,17 @@
 # Nightmare-Eclipse Arsenal
 
 **GitHub account:** @Nightmare-Eclipse (4.7k followers, "Microsoft's nightmare", Redmond WA)
-**Status:** Account taken down from GitHub (likely DMCA by Microsoft ~2024-2025)
+**Status:** Account taken down from GitHub (likely DMCA by Microsoft ~2024-2025). WarCDev mirror org also taken down. Forks exist transiently but get removed quickly.
+
+**CVEs assigned:**
+- BlueHammer: CVE-2026-33825
+- YellowKey: CVE-2026-45585
+- MiniPlasma: (CVE-2020-17103, originally from Google Project Zero, found still unpatched)
+- GreenPlasma: No CVE (incomplete PoC)
+- RedSun: No CVE assigned
+- UnDefend: No CVE (DOS tool)
+
+**Active exploitation confirmed** by Huntress, Barracuda, Vectra - these PoCs are being used in the wild.
 
 All 6 repos targeted Windows security mechanisms. Every single one was a production-grade PoC, not a CTF toy.
 
